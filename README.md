@@ -93,9 +93,9 @@ pytest
 - Открыть панель администратора [localhost:8000/admin/](http://localhost:8000/admin/)
 - Открыть главную страницу [localhost:8000/](http://localhost:8000/)
 - Открыть страницы документации API:
-  * [api.yaml](https://stethoscope.acceleratorpracticum.ru/api/v1/schema/)
-  * [swagger-ui](https://stethoscope.acceleratorpracticum.ru/api/v1/schema/swagger-ui/)
-  * [redoc](https://stethoscope.acceleratorpracticum.ru/api/v1/schema/redoc/)
+  * [api.yaml](https://stethoscope-portal.ru/api/v1/schema/)
+  * [swagger-ui](https://stethoscope-portal.ru/api/v1/schema/swagger-ui/)
+  * [redoc](https://stethoscope-portal.ru/api/v1/schema/redoc/)
 ### Установка pre-commit хуков
 ```
 pre-commit install
