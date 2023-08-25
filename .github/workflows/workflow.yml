@@ -111,7 +111,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd ./stethoscope_infra
+            cd /opt/stethoscope_infra
             echo DEBUG=${{ vars.DEBUG }} > .env
             echo LOGGING_ENABLED=${{ vars.LOGGING_ENABLED }} > .env
             echo CORS_ALLOW_ALL_ORIGINS=${{ vars.CORS_ALLOW_ALL_ORIGINS }} >> .env
