@@ -165,3 +165,9 @@ class Comment(UUIDMixin, TimeStampedMixin):
 
     def __str__(self):
         return self.text[:25]
+
+
+class UniqueWords(models.Model):
+    word = models.CharField(
+        unique=True,
+    )
