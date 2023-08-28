@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.search import SearchQuery, SearchRank
+from django.contrib.postgres.search import SearchQuery, SearchRank, TrigramSimilarity
 from django.db.models import Count, Exists, F, OuterRef, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
@@ -30,7 +30,7 @@ from api.serializers import (
     TagRootsSerializer,
     TagSerializer,
 )
-from articles.models import Article, FavoriteArticle, Tag
+from articles.models import Article, FavoriteArticle, Tag, UniqueWords
 from likes.models import Vote, VoteTypes
 from likes.utils import annotate_user_queryset
 
@@ -134,6 +134,26 @@ class ArticleViewSet(
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ArticleFilter
 
+    @staticmethod
+    def fix_typos_in_search_query(query: str) -> str:
+        """Преобразование опечаток в нормальные формы слов, с помощью триграмм."""
+        words = query.split()
+        res_query = ''
+        for word in words:
+            possible_words = UniqueWords.objects.annotate(
+                similarity=TrigramSimilarity('word', word),
+            ).filter(similarity__gt=0.3)
+            res_query += '('
+            for possible_word in possible_words:
+                res_query += "\'" + possible_word.word + "\'"
+                res_query += '|'
+            res_query += ')&'
+        res_query = res_query.replace('|)', ')')
+        res_query = res_query[:-1]
+        if res_query == '()':  # если нет ни одного слова, то возвращает стоп-слово
+            res_query = "('а')"
+        return res_query
+
     def get_queryset(self):
         qs = (
             Article.objects.filter(is_published=True)
@@ -215,7 +235,8 @@ class ArticleViewSet(
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        query = SearchQuery(query)
+        query = self.fix_typos_in_search_query(query)
+        query = SearchQuery(query, config='russian', search_type='raw')
         rank = SearchRank(F('search_vector'), query)
         qs = (
             self.get_queryset()
