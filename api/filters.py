@@ -23,21 +23,27 @@ class ArticleFilter(django_filters.FilterSet):
         fields = ()
 
     @staticmethod
-    def _get_tags_with_children(tags):
-        """Формирует набор тегов (выбранные и их потомки) для фильтров по тегам."""
-        unique_tags = set()
+    def _filter_articles_by_tags(tags, queryset, filtering_method):
+        """Фильтр переданного queryset по тегам методом filtering_method."""
+        tag_subtrees = []
+        tag_found = False
         for tag in tags:
-            if tag not in unique_tags:
-                unique_tags = unique_tags.union(tag.get_descendants(include_self=True))
-        return unique_tags
+            for tag_subtree in tag_subtrees:
+                if tag in tag_subtree:
+                    tag_found = True
+                    break
+            if not tag_found:
+                t_subtree = tag.get_descendants(include_self=True)
+                tag_subtrees.append(t_subtree)
+                queryset = getattr(queryset, filtering_method)(tags__in=t_subtree)
+            tag_found = False
+        return queryset
 
     def filter_tags(self, queryset, name, value: list[uuid.UUID]):  # noqa: WPS122
         """Фильтрует articles, выбирая статьи с указанными тегами."""
         if not value:
             return queryset
-        return queryset.filter(
-            tags__in=ArticleFilter._get_tags_with_children(value),
-        ).distinct()
+        return self._filter_articles_by_tags(value, queryset, 'filter')
 
     def filter_tags_exclude(  # noqa: WPS122
         self,
@@ -48,6 +54,4 @@ class ArticleFilter(django_filters.FilterSet):
         """Фильтрует articles, исключая статьи с указанными тегами."""
         if not value:
             return queryset
-        return queryset.exclude(
-            tags__in=ArticleFilter._get_tags_with_children(value),
-        ).distinct()
+        return self._filter_articles_by_tags(value, queryset, 'exclude')
