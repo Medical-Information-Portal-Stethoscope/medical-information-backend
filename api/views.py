@@ -140,9 +140,13 @@ class ArticleViewSet(
         words = query.split()
         res_query = ''
         for word in words:
+            if word.isalpha():
+                similarity_accuracy = 0.3
+            else:
+                similarity_accuracy = 0.9999999
             possible_words = UniqueWords.objects.annotate(
                 similarity=TrigramSimilarity('word', word),
-            ).filter(similarity__gt=0.3)
+            ).filter(similarity__gt=similarity_accuracy)
             res_query += '('
             for possible_word in possible_words:
                 res_query += "\'" + possible_word.word + "\'"
