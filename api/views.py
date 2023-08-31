@@ -147,6 +147,8 @@ class ArticleViewSet(
             possible_words = UniqueWords.objects.annotate(
                 similarity=TrigramSimilarity('word', word),
             ).filter(similarity__gt=similarity_accuracy)
+            if not possible_words.exists():
+                continue
             res_query += '('
             for possible_word in possible_words:
                 res_query += "\'" + possible_word.word + "\'"
