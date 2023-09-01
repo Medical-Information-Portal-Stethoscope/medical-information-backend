@@ -26,21 +26,6 @@ class Migration(migrations.Migration):
                   (SELECT coalesce(string_agg(last_name, ' '), '')
                    FROM users_user WHERE users_user.id = NEW.author_id)), 'B')
                 INTO NEW.search_vector;
-                INSERT INTO articles_uniquewords (word)
-                  SELECT regexp_split_to_table(NEW.title ||
-                    NEW.text, '\W+')  # noqa: W605
-                ON CONFLICT (word) DO NOTHING;
-                INSERT INTO articles_uniquewords (word)
-                  SELECT regexp_split_to_table(NEW.source_name, '\W+')  # noqa: W605
-                ON CONFLICT (word) DO NOTHING;
-                INSERT INTO articles_uniquewords (word)
-                  SELECT first_name FROM users_user
-                  WHERE id = NEW.author_id
-                ON CONFLICT (word) DO NOTHING;
-                INSERT INTO articles_uniquewords (word)
-                  SELECT last_name FROM users_user
-                  WHERE id = NEW.author_id
-                ON CONFLICT (word) DO NOTHING;
                 RETURN NEW;
                 END;
                 $$;
@@ -51,14 +36,6 @@ class Migration(migrations.Migration):
                 BEGIN
                   UPDATE articles_article SET search_vector = NULL
                     WHERE author_id = NEW.id;
-                  INSERT INTO articles_uniquewords (word)
-                    SELECT first_name FROM users_user
-                    WHERE id = NEW.id
-                  ON CONFLICT (word) DO NOTHING;
-                  INSERT INTO articles_uniquewords (word)
-                    SELECT last_name FROM users_user
-                    WHERE id = NEW.id
-                  ON CONFLICT (word) DO NOTHING;
                   RETURN NEW;
                 END;
                 $$;
@@ -68,18 +45,33 @@ class Migration(migrations.Migration):
                 FOR EACH ROW
                 EXECUTE PROCEDURE null_article_search_vector();
 
-                UPDATE articles_article SET search_vector =
-                setweight(to_tsvector('russian', coalesce(title, '')), 'A') ||
-                setweight(to_tsvector('russian', coalesce(source_name, '')), 'B') ||
-                setweight(to_tsvector('russian', coalesce(text, '')), 'C') ||
-                setweight(to_tsvector('russian',
-                  (SELECT coalesce(string_agg(first_name, ' '), '')
-                   FROM users_user WHERE id = author_id)), 'B') ||
-                setweight(to_tsvector('russian',
-                  (SELECT coalesce(string_agg(last_name, ' '), '')
-                   FROM users_user WHERE id = author_id)), 'B');
-
                 UPDATE articles_article SET search_vector = NULL;
+
+                INSERT INTO articles_uniquewords (word) SELECT word
+                FROM ts_stat(
+                  'SELECT to_tsvector(''simple'', title) FROM articles_article'
+                )
+                ON CONFLICT (word) DO NOTHING;
+                INSERT INTO articles_uniquewords (word) SELECT word
+                FROM ts_stat(
+                  'SELECT to_tsvector(''simple'', source_name) FROM articles_article'
+                )
+                ON CONFLICT (word) DO NOTHING;
+                INSERT INTO articles_uniquewords (word) SELECT word
+                FROM ts_stat(
+                  'SELECT to_tsvector(''simple'', text) FROM articles_article'
+                )
+                ON CONFLICT (word) DO NOTHING;
+                INSERT INTO articles_uniquewords (word) SELECT word
+                FROM ts_stat(
+                  'SELECT to_tsvector(''simple'', first_name) FROM users_user'
+                )
+                ON CONFLICT (word) DO NOTHING;
+                INSERT INTO articles_uniquewords (word) SELECT word
+                FROM ts_stat(
+                  'SELECT to_tsvector(''simple'', last_name) FROM users_user'
+                )
+                ON CONFLICT (word) DO NOTHING;
                 """,
             reverse_sql="""
                 DROP TRIGGER IF EXISTS users_rename_trigger ON fts_comment;
