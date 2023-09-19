@@ -218,6 +218,28 @@ class ArticleViewSet(
         if request.method == 'DELETE':
             return self._delete_favorite(request, pk)
 
+    @action(
+        methods=['get'],
+        detail=False,
+        permission_classes=(IsAuthenticated,),
+        filterset_class=None,
+    )
+    def favorites(self, request):
+        qs = (
+            self.get_queryset()
+            .filter(is_favorited=True)
+            .annotate(
+                favorited_at=FavoriteArticle.objects.filter(
+                    article=OuterRef('pk'),
+                    user=request.user,
+                ).values('created_at')[:1],
+            )
+            .order_by('-favorited_at')
+        )
+        qs = self.paginate_queryset(qs)
+        serializer = self.get_serializer(qs, many=True)
+        return self.get_paginated_response(serializer.data)
+
     @action(detail=False)
     def the_most_popular(self, request):
         instance = self.get_queryset().order_by('-views_count', '-created_at').first()
