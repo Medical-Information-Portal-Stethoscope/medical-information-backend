@@ -138,6 +138,13 @@ ARTICLE_VIEW_SET_SCHEMA = {
             status.HTTP_422_UNPROCESSABLE_ENTITY: None,
         },
     ),
+    'favorites': extend_schema(
+        summary='Список избранных статей.',
+        request=None,
+        responses={
+            status.HTTP_200_OK: ArticleSerializer(many=True),
+        },
+    ),
 }
 
 TOKEN_CREATE_VIEW_SCHEMA = {

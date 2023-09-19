@@ -129,10 +129,11 @@ class TagAdmin(DraggableMPTTAdmin):
 
 @admin.register(FavoriteArticle)
 class FavoriteArticleAdmin(admin.ModelAdmin):
-    list_display = ('id', 'article', 'user')
+    list_display = ('id', 'article', 'user', 'created_at')
     list_filter = ('article', 'user')
     search_fields = ('user__email', 'article__title')
     autocomplete_fields = ('article', 'user')
+    readonly_fields = ('created_at',)
 
 
 @admin.register(Viewer)
