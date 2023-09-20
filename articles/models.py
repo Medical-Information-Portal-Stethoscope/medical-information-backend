@@ -129,6 +129,8 @@ class FavoriteArticle(UUIDMixin):
         help_text=_('select article'),
     )
 
+    created_at = models.DateTimeField(_('created_at'), auto_now_add=True)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
