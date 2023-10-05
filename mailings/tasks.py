@@ -39,10 +39,11 @@ def send_weekly_email():
     subject = settings.WEEKLY_SUBJECT
     from_email = settings.EMAIL_HOST_USER
 
-    email = EmailMultiAlternatives(
-        subject=subject,
-        from_email=from_email,
-        to=recipient_list,
-    )
-    email.attach_alternative(html_message, 'text/html')
-    email.send()
+    for recipient_email in recipient_list:
+        email = EmailMultiAlternatives(
+            subject=subject,
+            from_email=from_email,
+            to=[recipient_email],
+        )
+        email.attach_alternative(html_message, 'text/html')
+        email.send()
