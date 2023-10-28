@@ -7,7 +7,7 @@ class ImageBytesSizeValidator:
         self.max_image_size = max_image_size_bytes
 
     def __call__(self, image):
-        if image.size > self.max_image_size:
+        if image and image.size > self.max_image_size:
             raise ValidationError(_(f'File size exceeded (currently {image.size}).'))
 
 
