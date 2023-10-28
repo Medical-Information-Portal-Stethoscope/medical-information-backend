@@ -17,6 +17,8 @@ class ImageDimensionValidator:
         self.max_height = max_height
 
     def __call__(self, image_object):
+        if not image_object:
+            return
         try:
             from PIL import Image
 
@@ -38,6 +40,8 @@ class ImageContentTypeValidator:
         self.allowed_types = allowed_types
 
     def __call__(self, image_object):
+        if not image_object:
+            return
         try:
             from PIL import Image
 
